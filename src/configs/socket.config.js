@@ -45,21 +45,29 @@ const removeUserFromList = (socketId) => {
 
 io.on("connection", (socket) => {
   socket.on("message", async (payload, file) => {
-    if (typeof payload !== "object") {
-      return;
-    }
-    const { senderId, receiverId, text } = payload;
-    if (!senderId || !receiverId) {
-      return io.to(socket.id).emit("message", {
+    try {
+      if (typeof payload !== "object") {
+        return;
+      }
+      const { senderId, receiverId, text } = payload;
+      if (!senderId || !receiverId) {
+        return io.to(socket.id).emit("message", {
+          status: false,
+          message: "Both senderId and receiverId are required",
+        });
+      }
+      const message = await Message.create({
+        senderId,
+        receiverId,
+        text,
+      });
+    } catch (err) {
+      console.log(err);
+      io.to(socket.id).emit("message", {
         status: false,
-        message: "Both senderId and receiverId are required",
+        message: "Some internal error occured",
       });
     }
-    const message = await Message.create({
-      senderId,
-      receiverId,
-      text,
-    });
   });
 
   socket.on("disconnect", () => {
