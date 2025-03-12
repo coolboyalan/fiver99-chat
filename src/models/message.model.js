@@ -8,18 +8,10 @@ Message.initialize(
     receiverId: {
       type: DataTypes.BIGINT,
       allowNull: false,
-      references: {
-        model: "user_table",
-        key: "id",
-      },
     },
     senderId: {
       type: DataTypes.BIGINT,
       allowNull: false,
-      references: {
-        model: "user_table",
-        key: "id",
-      },
     },
     text: {
       type: DataTypes.TEXT,

@@ -44,6 +44,7 @@ const removeUserFromList = (socketId) => {
 };
 
 io.on("connection", (socket) => {
+  console.log("User connected", socket.id);
   socket.on("message", async (payload, file) => {
     try {
       if (typeof payload !== "object") {
@@ -56,10 +57,24 @@ io.on("connection", (socket) => {
           message: "Both senderId and receiverId are required",
         });
       }
+      if (!text && !file) {
+        return io.to(socket.id).emit("message", {
+          status: false,
+          message: "Please send a valid text or file",
+        });
+      }
+
       const message = await Message.create({
         senderId,
         receiverId,
         text,
+      });
+
+      const receiverSocketId = userList[receiverId];
+      socket.to(receiverSocketId).emit("message", {
+        senderId,
+        text,
+        file,
       });
     } catch (err) {
       console.log(err);
@@ -70,8 +85,32 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("addUser", async (payload) => {
+    userList[payload] = socket.id;
+    socketList[socket.id] = payload;
+  });
+
+  socket.on("read", async (payload) => {
+    const receiverId = socketList[socket.id];
+    await Message.update(
+      { read: true },
+      { where: { receiverId, senderId: payload } },
+    );
+  });
+
+  socket.on("user-typing", async (payload) => {
+    const socketId = userList[payload];
+    const senderId = socketList[socket.id];
+    if (socketId) {
+      socket.to(socketId).emit("user-typing", senderId);
+    }
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    const userId = socketList[socket.id];
+    delete socketList[socket.id];
+    delete userList[userId];
+    console.log(`User disconnected ${socket.id}`);
   });
 });
 
