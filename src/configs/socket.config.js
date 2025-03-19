@@ -16,7 +16,7 @@ const getUser = (userId) => {
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -114,6 +114,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000);
+server.listen(3030);
 
 export default server;
