@@ -12,6 +12,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST, // Change to your database host
     dialect: "mysql", // Change to 'postgres', 'sqlite', 'mssql' as needed
     logging: false, // Set to 'console.log' for debugging
+    timezone: "+05:30",
   },
 );
 
