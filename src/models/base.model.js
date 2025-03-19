@@ -1,6 +1,4 @@
 import path from "path";
-import sharp from "sharp";
-import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import httpStatus from "http-status";
 import sequelize from "#configs/database";

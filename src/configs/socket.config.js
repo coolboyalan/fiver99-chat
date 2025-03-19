@@ -1,9 +1,15 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import path from "path";
+import { fileURLToPath } from "url";
 import Message from "#models/message";
+import saveFile from "#utils/upload";
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 const server = createServer(app);
 
 const userList = {};
@@ -45,12 +51,12 @@ const removeUserFromList = (socketId) => {
 
 io.on("connection", (socket) => {
   console.log("User connected", socket.id);
-  socket.on("message", async (payload, file) => {
+  socket.on("message", async (payload, file = null) => {
     try {
       if (typeof payload !== "object") {
         return;
       }
-      const { senderId, receiverId, text } = payload;
+      let { senderId, receiverId, text } = payload;
       if (!senderId || !receiverId) {
         return io.to(socket.id).emit("message", {
           status: false,
@@ -63,18 +69,25 @@ io.on("connection", (socket) => {
           message: "Please send a valid text or file",
         });
       }
+      let filePath = null;
+      if (file) {
+        text = null;
+        filePath = await saveFile(file);
+        filePath = filePath.replace("src/", "/");
+      }
 
       const message = await Message.create({
         senderId,
         receiverId,
         text,
+        file: filePath,
       });
 
       const receiverSocketId = userList[receiverId];
       socket.to(receiverSocketId).emit("message", {
         senderId,
         text,
-        file,
+        file: filePath,
       });
     } catch (err) {
       console.log(err);
